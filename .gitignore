@@ -1,0 +1,8 @@
+*.DS_Store
+optimized/*
+timed1/*
+timed2/*
+timed3/*
+timed4/*
+output/*
+
