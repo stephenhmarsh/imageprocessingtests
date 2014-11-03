@@ -13,5 +13,12 @@ scripts will process images into different "output" folders, allowing review of 
 Current Scripts
 ===============
 
-# processing_time_test.sh - processes the images using a variety of different workflow paths (all from original, from large, etc) to test speed
-# single_compression_test.sh - does one loop through the source files in order to test optimization/compression settings
+* processing_time_test.sh - processes the images using a variety of different workflow paths (all from original, from large, etc) to test speed
+* single_compression_test.sh - does one loop through the source files in order to test optimization/compression settings
+* resize_options.sh - creates a variety of resized images with various compression states, used to help pinpoint best output settings for a geven use case
+
+
+Photo Credits
+===============
+
+Sample photos included in project are Copyright Chris Casciano unless otherwise noted.
