@@ -9,11 +9,10 @@
 # How it works:
 # Give the script:
   # * A folder of images to process
-  # * Optional : output directory (otherwise names it automatically from Timestamp and Settings name)
+  # * (Optional) : An output folder (otherwise it creates one automatically based on timestamp and settings)
   # * TODO: Optional : A file of export options hashes to loop through
-# It runs all those export options and puts them in a folder based on the name of the options hash
-# The files are named with the settings you ran on them.
-# There's a report about how long it took to do each folder.
+# The script processes the images based on hash(es) of settings and puts them in either A) a new folder specific to those settings or B) the folder specified
+# There's a report about how long it took to do each folder and average time per image.
 
 require 'find'
 require 'mini_magick'
