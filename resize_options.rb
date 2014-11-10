@@ -4,19 +4,23 @@
 # modeled after https://gist.github.com/netzpirat/336871
 # uses minimagick
 
-#TODO: test with other formats / use file validation(?)
-
 # How it works:
-# Give the script:
-  # * A folder of images to process
-  # * (Optional) : An output folder (otherwise it creates one automatically based on timestamp and settings)
-  # * TODO: Optional : A file of export options hashes to loop through
-# The script processes the images based on hash(es) of settings and puts them in either A) a new folder specific to those settings or B) the folder specified
-# There's a report about how long it took to do each folder and average time per image.
+
+# Each export option goes in a hash - example: "{label: 'big', resize: 2000}
+# Groups of options can be put in an array and labeled, for example: 
+#  "{ web_exports : [{some}, {options}], 
+#     offline_exports : [{some}, {more}, {options}] 
+#     expirement_1 : [{some}, {different}, {options}]" }
+# The script will create folders based on the name of the options and the time.  Example: "/output-1415644186-web_exports" and "/output-1415644186-expirement_1"
+  # Optional: Give the script a path to write to instead. All images will be outputted there.  Example: "/image-dump/1415644186-web_exports"
+
+# You can give the script a JSON file of settings to run, but you will need to set output path to something (or 'none' to skip)
+#   Example: ruby resize_options.rb ./originals ./image_output ./example.json
+#        Or: ruby resize_options.rb ./originals none ./example.json
 
 require 'find'
+require 'json'
 require 'mini_magick'
-include MiniMagick
 
 if ARGV.length < 1 && ARGV.length > 3
   puts "Usage: ruby resize_options.rb /path/to/inputdirectory [/path/to/outputdirectory] [/export_options.json]"
@@ -28,19 +32,14 @@ end
 
 # Output folder
 def set_output_path(set_name="")
-  if ARGV[1]
-    @output_path = ARGV[1]
-    else
-    @output_path = ("./output-#{Time.now.to_i}" + (set_name.length > 0 ? "-#{set_name}" : ""))
-    `mkdir #{(@output_path)}`
-    return @output_path
-  end
+  @output_path = ( (ARGV[1] && ARGV[1].downcase != 'none' ? "#{ARGV[1]}/" : "./output-") + "#{Time.now.to_i}" + (set_name.length > 0 ? "-#{set_name}" : ""))
+  `mkdir #{@output_path}`
+  return @output_path
 end
 
 # Options We're Running
 if ARGV[2]
-  # TODO : open the specified json file and use that
-  # @options_set = parsed JSON
+  @export_settings = JSON.parse(File.read("#{ARGV[2]}"), {symbolize_names: true})
 else
   # Unless given a JSON file, it will run these options by default
   @export_settings = {
@@ -63,32 +62,29 @@ end
 
 
 # Individual Image Processing
-def process_image_for_web(params, file)
-  filebase = File.basename(file,".jpg")
+def process_image_for_web(params, file, extension)
+  start = Time.now
+  filebase = File.basename(file, "#{extension}")
 
   if params[:from_version]
-    processed = MiniMagick::Image.open("#{@output_path}/#{filebase}_#{params[:from_version]}.jpg")
+    processed = MiniMagick::Image.open("#{@output_path}/#{filebase}_#{params[:from_version]}#{extension}")
   else
     processed = MiniMagick::Image.open(file)
   end
-
-  start = Time.now
 
   puts "#{file}"
   puts "#{processed}"
 
   processed.combine_options do |c|
+    c.coalesce if extension == ".gif"
     c.resize "#{params[:resize]}"
     c.quality "#{params[:quality]}"
     c.strip
     c.adaptive_sharpen("#{params[:sharpen]}") if params[:sharpen]
-  end
+  end  
 
-  # not baking settings info into filename right now
-  # settings_info = "size-#{params[:label]}_quality-#{params[:quality]}_" + (params[:sharpen] ? "sharpen-#{params[:sharpen]}" : "no-sharpen") + (params[:from_version] ? "from-#{params[:from_version]}" : "") 
-
-  puts "Writing #{@output_path}/#{filebase}_#{params[:label]}.jpg"
-  processed.write "#{@output_path}/#{filebase}_#{params[:label]}.jpg"
+  puts "Writing #{@output_path}/#{filebase}_#{params[:label]}#{extension}"
+  processed.write "#{@output_path}/#{filebase}_#{params[:label]}#{extension}"
 
   stop = Time.now
   time_total = stop - start
@@ -109,9 +105,9 @@ end
   @skipped_files = []
                                                      
   Find.find(ARGV[0]) do |f|
-    if ['.jpg'].include?(File.extname(f))  # TODO: this should be tested with other formats like ani-gifs  
+    if ['.jpg', '.gif'].include?(File.extname(f))  # TODO: this should be tested with other formats like ani-gifs  
       set_of_options.each do |params|                 # for every file, process it with every option
-        process_image_for_web(params, f)
+        process_image_for_web(params, f, File.extname(f))
       end
       @processed_files += 1
     else

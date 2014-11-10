@@ -1,0 +1,8 @@
+{ "boop" : [
+	{"label" : "test_big",
+	"resize" : 1000,
+	"quality" : 70 },
+	{"label" : "test_small",
+	"resize" : 100,
+	"quality" : 70 }
+] }
